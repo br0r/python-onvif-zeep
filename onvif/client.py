@@ -5,6 +5,8 @@ import logging
 import os.path
 from threading import Thread, RLock
 
+from urllib.parse import urlparse
+
 from zeep.client import Client, CachingClient, Settings
 from zeep.wsse.username import UsernameToken
 import zeep.helpers
@@ -193,7 +195,7 @@ class ONVIFCamera(object):
                  wsdl_dir=os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                        "wsdl"),
                  encrypt=True, daemon=False, no_cache=False, adjust_time=False,
-                 transport=None):
+                 transport=None, replace_netloc=False):
         os.environ.pop('http_proxy', None)
         os.environ.pop('https_proxy', None)
         self.host = host
@@ -212,11 +214,11 @@ class ONVIFCamera(object):
         self.services_lock = RLock()
 
         # Set xaddrs
-        self.update_xaddrs()
+        self.update_xaddrs(replace_netloc)
 
         self.to_dict = ONVIFService.to_dict
 
-    def update_xaddrs(self):
+    def update_xaddrs(self, replace_netloc=False):
         # Establish devicemgmt service first
         self.dt_diff = None
         self.devicemgmt = self.create_devicemgmt_service()
@@ -235,7 +237,12 @@ class ONVIFCamera(object):
             try:
                 if name.lower() in SERVICES and capability is not None:
                     ns = SERVICES[name.lower()]['ns']
-                    self.xaddrs[ns] = capability['XAddr']
+                    xaddr = capability['XAddr']
+                    if replace_netloc:
+                        xaddr = urlparse(xaddr)
+                        xaddr = xaddr._replace(netloc = '%s:%s' % (self.host, self.port))
+                        xaddr = xaddr.geturl()
+                    self.xaddrs[ns] = xaddr
             except Exception:
                 logger.exception('Unexpected service type')
 
