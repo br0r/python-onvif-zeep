@@ -6,7 +6,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 version_path = os.path.join(here, 'onvif/version.txt')
 version = open(version_path).read().strip()
 
-requires = ['zeep >= 3.0.0']
+#requires = []
+#requires = ['git+git://github.com/mvantellingen/python-zeep@master#egg=zeep']
 
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
@@ -47,9 +48,10 @@ setup(
       url='http://github.com/quatanium/python-onvif',
       zip_safe=False,
       packages=find_packages(exclude=['docs', 'examples', 'tests']),
-      install_requires=requires,
+      #install_requires=requires,
       include_package_data=True,
       data_files=[(wsdl_dst_dir, wsdl_files)],
+      dependency_links=['git+git://github.com/mvantellingen/python-zeep/tarball/master#egg=zeep'],
       entry_points={
           'console_scripts': ['onvif-cli = onvif.cli:main']
           }
